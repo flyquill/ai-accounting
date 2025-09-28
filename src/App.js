@@ -1,26 +1,23 @@
-import logo from './logo.svg';
-import './App.css';
-import ChatUI from './components/ChatUI';
-import Sidebar from './components/Sidebar';
+import logo from "./logo.svg";
+import "./App.css";
+import ChatUI from "./components/ChatUI";
+import Sidebar from "./components/Sidebar";
+import BusinessesPage from "./pages/businesses";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 
 function App() {
-
   const n8nServer = process.env.REACT_APP_N8N_WEB_SERVER;
-  const n8nProductionUrl = process.env.REACT_APP_N8N_PRODUCTION_URL;
 
   return (
-    <>
+    <Router>
       <div className="d-flex">
-        {/* Sidebar */}
-        {/* <Sidebar /> */}
-
-        {/* Main Content */}
-        <div className="flex-grow-1">
-          <ChatUI apiUrl={`${n8nServer}${n8nProductionUrl}`} />
-        </div>
+      <Sidebar />
+      <Routes>
+        <Route path="/chat" element={<ChatUI n8nServer={n8nServer} />} />
+        <Route path="/businesses" element={<BusinessesPage n8nServer={n8nServer} />} />
+      </Routes>
       </div>
-    </>
-
+    </Router>
   );
 }
 
