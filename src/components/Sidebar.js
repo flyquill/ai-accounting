@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import '../css/Sidebar.css'
+import { Link } from "react-router-dom";
 
 export default function Sidebar() {
     const [open, setOpen] = useState(false);
@@ -29,19 +30,24 @@ export default function Sidebar() {
                 {/* Sidebar Links */}
                 <ul className="list-unstyled p-3">
                     <li>
-                        <a href="#dashboard" className="sidebar-link">
+                        <Link to="/" className="sidebar-link">
                             <i className="bi bi-speedometer2 me-2"></i> Dashboard
-                        </a>
+                        </Link>
                     </li>
                     <li>
-                        <a href="#accounts" className="sidebar-link">
-                            <i className="bi bi-people me-2"></i> Accounts
-                        </a>
+                        <Link to="/chat" className="sidebar-link">
+                            <i className="bi bi-people me-2"></i> Assistant
+                        </Link>
                     </li>
                     <li>
                         <a href="#ledger" className="sidebar-link">
                             <i className="bi bi-journal-text me-2"></i> Ledger
                         </a>
+                    </li>
+                    <li>
+                        <Link to="/businesses" className="sidebar-link">
+                            <i className="bi bi-gear me-2"></i> Businesses
+                        </Link>
                     </li>
                     <li>
                         <a href="#settings" className="sidebar-link">

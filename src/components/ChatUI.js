@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
-export default function ChatUI({ apiUrl = "http://localhost:5678/webhook/ae1d4436-f226-414f-b0b6-48ad23c7f04c", botName = "Assistant" }) {
+export default function ChatUI({ n8nServer, botName = "Assistant" }) {
 
   const chatSession = localStorage.getItem("chat_session") ? localStorage.getItem("chat_session") : crypto.randomUUID()
   localStorage.setItem("chat_session", chatSession);
@@ -47,7 +47,7 @@ export default function ChatUI({ apiUrl = "http://localhost:5678/webhook/ae1d443
 
     try {
 
-      const res = await fetch(apiUrl, {
+      const res = await fetch(`${n8nServer}d0a2e2ed-4936-4aad-a5a6-783d73715de8`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text, business_id: businessId, chat_session: chatSession }),
@@ -107,6 +107,7 @@ export default function ChatUI({ apiUrl = "http://localhost:5678/webhook/ae1d443
   }
 
   return (
+    <div className="flex-grow-1">
     <div className="container m-0 p-0" style={{ maxWidth: "100%", height: "100vh", overflow: 'hidden' }}>
       <div className="card h-100 shadow-sm">
         <div className="card-header d-flex justify-content-between align-items-center bg-white" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
@@ -166,9 +167,10 @@ export default function ChatUI({ apiUrl = "http://localhost:5678/webhook/ae1d443
               </svg>
             </button>
           </form>
-          {/* <div className="small text-muted mt-1">Messages are sent to: <code> {apiUrl} </code></div> */}
+          {/* <div className="small text-muted mt-1">Messages are sent to: <code> {n8nServer} </code></div> */}
         </div>
       </div>
+    </div>
     </div>
   );
 }
