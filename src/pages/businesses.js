@@ -4,17 +4,16 @@ import Cookies from "js-cookie";
 
 export default function BusinessesPage({ backendServer }) {
 
-  const { isSignedIn, user } = useUser();
-
-  const userId = isSignedIn ? user.id : null;
+  const { isLoaded, isSignedIn, user } = useUser();
 
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [newBusinessLoading, setNewBusinessLoading] = useState(false);
 
   useEffect(() => {
+    if (!isLoaded) return;
     fetchBusinesses();
-  }, [loading]);
-
+  }, [isLoaded, loading]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -23,7 +22,7 @@ export default function BusinessesPage({ backendServer }) {
 
   const fetchBusinesses = async () => {
 
-    const res = await fetch(`${backendServer}/businesses/get.php?user_id=${userId}`);
+    const res = await fetch(`${backendServer}/businesses/get.php?user_id=${user.id}`);
 
     if (!res.ok) {
       const txt = await res.text();
@@ -46,20 +45,53 @@ export default function BusinessesPage({ backendServer }) {
       return;
     }
 
+    setNewBusinessLoading(true);
+
+    const res = await fetch(`${backendServer}/businesses/new.php`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: formData.name, address: formData.address, user_clerk_id: user.id }),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`Server error: ${res.status} ${txt}`);
+    }
+
+    const data = await res.json();
+
+    if(data.success){
+      fetchBusinesses();
+      setFormData({ name: "", address: ""});
+    }
     
-    const newBusiness = {
-      id: businesses.length + 1,
-      ...formData,
-    };
-    setBusinesses([...businesses, newBusiness]);
-    setFormData({ name: "", type: "", description: "" });
+    setNewBusinessLoading(false);
     
   };
 
   const changeBusiness = (id, name) => {
     Cookies.set("business_id", id);
-    Cookies.set("user_id", userId);
-    alert(`Business changed to ${name}`)
+    Cookies.set("business_name", name);
+    fetchBusinesses();
+    alert(`Business "${name}" has been activated!`);
+  }
+  
+  const deleteBusiness = async (id, name) => {
+    const res = await fetch(`${backendServer}/businesses/delete.php?user_id=${user.id}&business_id=${id}`);
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`Server error: ${res.status} ${txt}`);
+    }
+
+    const data = await res.json();
+
+    if(data.success){
+      fetchBusinesses();
+      alert(`Business "${name}" has been deleted!`);
+    }else{
+      alert(`Error while deleting business "${name}"`);
+    }
   }
 
   return (
@@ -92,8 +124,8 @@ export default function BusinessesPage({ backendServer }) {
               placeholder="Enter the business address."
             />
           </div>
-          <button type="submit" className="btn btn-primary w-100">
-            Add Business
+          <button type="submit" className={`btn btn-${newBusinessLoading ? 'secondary disabled' : 'primary'} w-100`}>
+            {newBusinessLoading ? 'Adding the business...' : 'Add Business'}
           </button>
         </form>
       </div>
@@ -105,11 +137,17 @@ export default function BusinessesPage({ backendServer }) {
           <div className="col-md-4 mb-4" key={biz.id}>
             <div className="card h-100 shadow-sm">
               <div className="card-body">
-                <h5 className="card-title" role="button" onClick={() => {changeBusiness(biz.id, biz.name)}}>{biz.name}</h5>
+                  <h5 className="card-title">{biz.name}</h5>
                 <h6 className="card-subtitle mb-2 text-muted">{biz.address}</h6>
                 <p className="card-text">
                   {biz.description || "No description provided."}
                 </p>
+                {biz.id != Cookies.get("business_id") ?
+                <>
+                  <button className="btn btn-danger mx-2" onClick={() => {deleteBusiness(biz.id, biz.name)}}>Delete</button>
+                  <button className="btn btn-success mx-2" onClick={() => {changeBusiness(biz.id, biz.name)}}>Activate</button>
+                </> : <button className="btn btn-primary disabled">Activated</button>
+                }
               </div>
             </div>
           </div>

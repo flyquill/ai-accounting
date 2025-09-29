@@ -24,7 +24,7 @@ function App() {
         <div className="d-flex">
           <Sidebar />
           <Routes>
-            <Route path="/chat" element={<ChatUI n8nServer={n8nServer} />} />
+            <Route path="/chat" element={<ChatUI n8nServer={n8nServer} backendServer={backendServer} />} />
             <Route path="/businesses" element={<BusinessesPage backendServer={backendServer} />} />
             <Route path="/login" element={<Login />} />
           </Routes>

@@ -2,13 +2,16 @@ import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useUser } from '@clerk/clerk-react'
 import Cookies from "js-cookie";
+import { useNavigate } from "react-router-dom";
 
-export default function ChatUI({ n8nServer, botName = "Assistant" }) {
+export default function ChatUI({ n8nServer, backendServer, botName = "Assistant" }) {
 
-  const { user } = useUser();
+  const navigate = useNavigate();
 
-  const chatSession = localStorage.getItem("chat_session") ? localStorage.getItem("chat_session") : crypto.randomUUID()
-  localStorage.setItem("chat_session", chatSession);
+  const { isLoaded, user } = useUser();
+
+  const chatSession = localStorage.getItem(`chat_session${Cookies.get('business_id')}`) ? localStorage.getItem(`chat_session${Cookies.get('business_id')}`) : crypto.randomUUID()
+  localStorage.setItem(`chat_session${Cookies.get('business_id')}`, chatSession);
 
   const firstMessage = [
     { id: 0, role: "system", content: "I am a helpful assistant for your accounting software you can ask me anything about your business." }
@@ -20,19 +23,39 @@ export default function ChatUI({ n8nServer, botName = "Assistant" }) {
   const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  
+  if(!user?.id){
+    navigate('/login');
+  }
 
   const businessId = Cookies.get("business_id");
-  const userId = Cookies.get("user_id");
-  
-  if(userId == user.id){
-    console.log('fake user!');
+
+  const verifyBusiness = async () => {
+
+    const res = await fetch(`${backendServer}/businesses/verify.php?user_id=${user.id}&business_id=${businessId}`);
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`Server error: ${res.status} ${txt}`);
+    }
+
+    const data = await res.json();
+    
+    if(!data.success){
+      alert('Please select a valid business from businesses');
+      navigate('/businesses');
+    }
   }
-  
 
   useEffect(() => {
+    // Guard: wait until Clerk finished loading and user is signed in
+    if (!isLoaded) return;
+    verifyBusiness();
+
     scrollToBottom();
     localStorage.setItem(chatSession, JSON.stringify(messages));
-  }, [messages, loading]);
+
+  }, [isLoaded, messages, loading]);
 
   function scrollToBottom() {
     if (messagesEndRef.current) {
@@ -114,71 +137,78 @@ export default function ChatUI({ n8nServer, botName = "Assistant" }) {
     );
   }
 
-  return (
-    <div className="flex-grow-1">
-    <div className="container m-0 p-0" style={{ maxWidth: "100%", height: "100vh", overflow: 'hidden' }}>
-      <div className="card h-100 shadow-sm">
-        <div className="card-header d-flex justify-content-between align-items-center bg-white" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
-          <div className="d-flex align-items-center">
-            <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style={{ width: "40px", height: "40px" }}>
-              {botName[0]}
+  if(isLoaded){
+    return (
+      <div className="flex-grow-1">
+      <div className="container m-0 p-0" style={{ maxWidth: "100%", height: "100vh", overflow: 'hidden' }}>
+        <div className="card h-100 shadow-sm">
+          <div className="card-header d-flex justify-content-between align-items-center bg-white" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
+            <div className="d-flex align-items-center">
+              <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style={{ width: "40px", height: "40px" }}>
+                {botName[0]}
+              </div>
+              <div>
+                <div className="fw-bold">{botName} <span className="badge text-bg-primary">{Cookies.get("business_name")}</span></div>
+                <div className="text-muted small"><span className={`badge rounded-pill text-bg-${loading ? 'warning' : 'success'}`}>{loading ? "Thinking…" : "Ready"}</span></div>
+              </div>
             </div>
-            <div>
-              <div className="fw-bold">{botName}</div>
-              <div className="text-muted small"><span className={`badge rounded-pill text-bg-${loading ? 'warning' : 'success'}`}>{loading ? "Thinking…" : "Ready"}</span></div>
+            <div className="text-muted small">
+              <button className="btn btn-danger btn-sm mx-1 text-center" onClick={() => { handleDeleteChat() }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-trash3" viewBox="0 0 16 16">
+                  <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5" />
+                </svg>
+              </button>
             </div>
+  
           </div>
-          <div className="text-muted small">
-            <button className="btn btn-danger btn-sm mx-1 text-center" onClick={() => { handleDeleteChat() }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-trash3" viewBox="0 0 16 16">
-                <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5" />
-              </svg>
-            </button>
+  
+          <div className="card-body overflow-auto bg-light" style={{ flex: 1 }}>
+            {messages.length === 0 && <div className="text-center text-muted">No messages yet — say hi 👋</div>}
+            {messages.map((m) => renderMessage(m))}
+            {loading && (
+              <div className="d-flex mb-3">
+                <div className="p-3 rounded bg-white border text-muted" style={{ maxWidth: "75%" }}>Typing…</div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
-
-        </div>
-
-        <div className="card-body overflow-auto bg-light" style={{ flex: 1 }}>
-          {messages.length === 0 && <div className="text-center text-muted">No messages yet — say hi 👋</div>}
-          {messages.map((m) => renderMessage(m))}
-          {loading && (
-            <div className="d-flex mb-3">
-              <div className="p-3 rounded bg-white border text-muted" style={{ maxWidth: "75%" }}>Typing…</div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {error && <div className="alert alert-danger m-0">Error: {error}</div>}
-
-        <div className="card-footer bg-white" style={{ position: 'sticky', bottom: '0', zIndex: '1' }}>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!loading) sendMessage();
-            }}
-            className="d-flex align-items-end gap-2"
-          >
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              rows={1}
-              placeholder="Type your message..."
-              className="form-control"
-              style={{ resize: "none" }}
-            />
-            <button type="submit" disabled={loading} className={`btn ${loading ? "btn-secondary" : "btn-success"}`}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-send" viewBox="0 0 16 16">
-                <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z" />
-              </svg>
-            </button>
-          </form>
-          {/* <div className="small text-muted mt-1">Messages are sent to: <code> {n8nServer} </code></div> */}
+  
+          {error && <div className="alert alert-danger m-0">Error: {error}</div>}
+  
+          <div className="card-footer bg-white" style={{ position: 'sticky', bottom: '0', zIndex: '1' }}>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!loading) sendMessage();
+              }}
+              className="d-flex align-items-end gap-2"
+            >
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                rows={1}
+                placeholder="Type your message..."
+                className="form-control"
+                style={{ resize: "none" }}
+              />
+              <button type="submit" disabled={loading} className={`btn ${loading ? "btn-secondary" : "btn-success"}`}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-send" viewBox="0 0 16 16">
+                  <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z" />
+                </svg>
+              </button>
+            </form>
+            {/* <div className="small text-muted mt-1">Messages are sent to: <code> {n8nServer} </code></div> */}
+          </div>
         </div>
       </div>
+      </div>
+    );
+  }else{
+    <div className="container text-center">
+      Loading...
     </div>
-    </div>
-  );
+  }
+
 }
