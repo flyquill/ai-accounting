@@ -1,7 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { useUser } from '@clerk/clerk-react'
+import Cookies from "js-cookie";
 
 export default function ChatUI({ n8nServer, botName = "Assistant" }) {
+
+  const { user } = useUser();
 
   const chatSession = localStorage.getItem("chat_session") ? localStorage.getItem("chat_session") : crypto.randomUUID()
   localStorage.setItem("chat_session", chatSession);
@@ -17,9 +21,13 @@ export default function ChatUI({ n8nServer, botName = "Assistant" }) {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
+  const businessId = Cookies.get("business_id");
+  const userId = Cookies.get("user_id");
   
-  const queryParams = new URLSearchParams(window.location.search);
-  const businessId = queryParams.get("business_id"); // e.g. ?business_id=123
+  if(userId == user.id){
+    console.log('fake user!');
+  }
+  
 
   useEffect(() => {
     scrollToBottom();

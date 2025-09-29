@@ -1,26 +1,39 @@
 import React, { useState, useEffect } from "react";
+import { useUser } from '@clerk/clerk-react'
 import Cookies from "js-cookie";
-import MySql from "../components/MySql";
 
-export default function BusinessesPage({ n8nServer }) {
+export default function BusinessesPage({ backendServer }) {
 
-  const userId = Cookies.get("user_id");
+  const { isSignedIn, user } = useUser();
+
+  const userId = isSignedIn ? user.id : null;
 
   const [businesses, setBusinesses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchBusinesses();
+  }, [loading]);
+
 
   const [formData, setFormData] = useState({
     name: "",
     address: "",
   });
 
-  useEffect(() => {
+  const fetchBusinesses = async () => {
 
-    let query = `SELECT * FROM businesses WHERE user_id = ${userId}`;
-    let data = MySql(n8nServer, query);
-    setBusinesses([data]);
-    console.log(businesses);
+    const res = await fetch(`${backendServer}/businesses/get.php?user_id=${userId}`);
 
-  }, []); // Optional: dependency array
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`Server error: ${res.status} ${txt}`);
+    }
+
+    const data = await res.json();
+    setBusinesses(data);
+    setLoading(false);
+  }
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -33,34 +46,21 @@ export default function BusinessesPage({ n8nServer }) {
       return;
     }
 
-    let query = `INSERT INTO businesses (name, address, user_id) VALUES ('${formData.name}', '${formData.address}', ${userId})`;
-
-    const res = await fetch(
-      `${n8nServer}ae1d4436-f226-414f-b0b6-48ad23c7f04c`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: query }),
-      }
-    );
-
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(`Server error: ${res.status} ${txt}`);
-    }
-
-    const data = await res.json();
-    const success = data[0].success ?? false;
-
-    if (success) {
-      const newBusiness = {
-        id: businesses.length + 1,
-        ...formData,
-      };
-      setBusinesses([...businesses, newBusiness]);
-      setFormData({ name: "", type: "", description: "" });
-    }
+    
+    const newBusiness = {
+      id: businesses.length + 1,
+      ...formData,
+    };
+    setBusinesses([...businesses, newBusiness]);
+    setFormData({ name: "", type: "", description: "" });
+    
   };
+
+  const changeBusiness = (id, name) => {
+    Cookies.set("business_id", id);
+    Cookies.set("user_id", userId);
+    alert(`Business changed to ${name}`)
+  }
 
   return (
     <div className="container my-5">
@@ -105,8 +105,8 @@ export default function BusinessesPage({ n8nServer }) {
           <div className="col-md-4 mb-4" key={biz.id}>
             <div className="card h-100 shadow-sm">
               <div className="card-body">
-                <h5 className="card-title">{biz.name}</h5>
-                <h6 className="card-subtitle mb-2 text-muted">{biz.type}</h6>
+                <h5 className="card-title" role="button" onClick={() => {changeBusiness(biz.id, biz.name)}}>{biz.name}</h5>
+                <h6 className="card-subtitle mb-2 text-muted">{biz.address}</h6>
                 <p className="card-text">
                   {biz.description || "No description provided."}
                 </p>
@@ -114,7 +114,8 @@ export default function BusinessesPage({ n8nServer }) {
             </div>
           </div>
         ))}
-        {businesses.length === 0 && (
+        {loading ? <p className="text-center">Loading...</p> :
+        businesses.length === 0 && (
           <p className="text-muted text-center">No businesses added yet.</p>
         )}
       </div>

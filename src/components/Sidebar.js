@@ -1,9 +1,16 @@
 import React, { useState } from "react";
 import '../css/Sidebar.css'
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton, useUser } from '@clerk/clerk-react'
 
 export default function Sidebar() {
     const [open, setOpen] = useState(false);
+
+    const { isSignedIn } = useUser();
+
+    if (!isSignedIn) {
+        return <Navigate to="/login" replace />;;
+    }
 
     return (
         <>
@@ -21,40 +28,51 @@ export default function Sidebar() {
                 {/* Sidebar Header */}
                 <div className="sidebar-header d-flex justify-content-between align-items-center p-3 border-bottom">
                     <h5 className="m-0 fw-bold text-primary">Menu</h5>
+                    <SignedOut>
+                        <SignInButton />
+                    </SignedOut>
+                    <SignedIn>
+                        <UserButton />
+                    </SignedIn>
                     <button
                         className="btn-close d-lg-none"
                         onClick={() => setOpen(false)}
                     ></button>
                 </div>
 
-                {/* Sidebar Links */}
-                <ul className="list-unstyled p-3">
-                    <li>
-                        <Link to="/" className="sidebar-link">
-                            <i className="bi bi-speedometer2 me-2"></i> Dashboard
-                        </Link>
-                    </li>
-                    <li>
-                        <Link to="/chat" className="sidebar-link">
-                            <i className="bi bi-people me-2"></i> Assistant
-                        </Link>
-                    </li>
-                    <li>
-                        <a href="#ledger" className="sidebar-link">
-                            <i className="bi bi-journal-text me-2"></i> Ledger
-                        </a>
-                    </li>
-                    <li>
-                        <Link to="/businesses" className="sidebar-link">
-                            <i className="bi bi-gear me-2"></i> Businesses
-                        </Link>
-                    </li>
-                    <li>
-                        <a href="#settings" className="sidebar-link">
-                            <i className="bi bi-gear me-2"></i> Settings
-                        </a>
-                    </li>
-                </ul>
+                <SignedIn>
+                    {/* Sidebar Links */}
+                    <ul className="list-unstyled p-3">
+                        <li>
+                            <Link to="/" className="sidebar-link">
+                                <i className="bi bi-speedometer2 me-2"></i> Dashboard
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/chat" className="sidebar-link">
+                                <i className="bi bi-people me-2"></i> Assistant
+                            </Link>
+                        </li>
+                        <li>
+                            <a href="#ledger" className="sidebar-link">
+                                <i className="bi bi-journal-text me-2"></i> Ledger
+                            </a>
+                        </li>
+                        <li>
+                            <Link to="/businesses" className="sidebar-link">
+                                <i className="bi bi-gear me-2"></i> Businesses
+                            </Link>
+                        </li>
+                        <li>
+                            <a href="#settings" className="sidebar-link">
+                                <i className="bi bi-gear me-2"></i> Settings
+                            </a>
+                        </li>
+                    </ul>
+                </SignedIn>
+                <SignedOut>
+                    <div className="container my-2">Please sign in to view all the pages</div>
+                </SignedOut>
             </div>
 
             {/* Overlay for Mobile */}
