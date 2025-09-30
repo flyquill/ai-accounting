@@ -10,7 +10,7 @@ export default function ChatUI({ n8nServer, backendServer, botName = "Assistant"
 
   const { isLoaded, user } = useUser();
 
-  const chatSession = localStorage.getItem(`chat_session${Cookies.get('business_id')}`) ? localStorage.getItem(`chat_session${Cookies.get('business_id')}`) : crypto.randomUUID()
+  const chatSession = localStorage.getItem(`chat_session${Cookies.get('business_id')}`) ? localStorage.getItem(`chat_session${Cookies.get('business_id')}`) : generateUUID();
   localStorage.setItem(`chat_session${Cookies.get('business_id')}`, chatSession);
 
   const firstMessage = [
@@ -113,6 +113,20 @@ export default function ChatUI({ n8nServer, backendServer, botName = "Assistant"
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (!loading) sendMessage();
+    }
+  }
+
+  function generateUUID() {
+    if (window.crypto && crypto.randomUUID) {
+      // Modern browsers
+      return crypto.randomUUID();
+    } else {
+      // Fallback for older browsers
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
     }
   }
 
