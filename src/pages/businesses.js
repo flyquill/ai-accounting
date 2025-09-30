@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useUser } from '@clerk/clerk-react'
+import { useUser } from "@clerk/clerk-react";
 import Cookies from "js-cookie";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function BusinessesPage({ backendServer }) {
-
-  const { isLoaded, isSignedIn, user } = useUser();
+  const { isLoaded, user } = useUser();
 
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,8 +21,9 @@ export default function BusinessesPage({ backendServer }) {
   });
 
   const fetchBusinesses = async () => {
-
-    const res = await fetch(`${backendServer}/businesses/get.php?user_id=${user.id}`);
+    const res = await fetch(
+      `${backendServer}/businesses/get.php?user_id=${user.id}`
+    );
 
     if (!res.ok) {
       const txt = await res.text();
@@ -32,7 +33,7 @@ export default function BusinessesPage({ backendServer }) {
     const data = await res.json();
     setBusinesses(data);
     setLoading(false);
-  }
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -50,7 +51,11 @@ export default function BusinessesPage({ backendServer }) {
     const res = await fetch(`${backendServer}/businesses/new.php`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: formData.name, address: formData.address, user_clerk_id: user.id }),
+      body: JSON.stringify({
+        name: formData.name,
+        address: formData.address,
+        user_clerk_id: user.id,
+      }),
     });
 
     if (!res.ok) {
@@ -60,13 +65,12 @@ export default function BusinessesPage({ backendServer }) {
 
     const data = await res.json();
 
-    if(data.success){
+    if (data.success) {
       fetchBusinesses();
-      setFormData({ name: "", address: ""});
+      setFormData({ name: "", address: "" });
     }
-    
+
     setNewBusinessLoading(false);
-    
   };
 
   const changeBusiness = (id, name) => {
@@ -74,10 +78,12 @@ export default function BusinessesPage({ backendServer }) {
     Cookies.set("business_name", name);
     fetchBusinesses();
     alert(`Business "${name}" has been activated!`);
-  }
-  
+  };
+
   const deleteBusiness = async (id, name) => {
-    const res = await fetch(`${backendServer}/businesses/delete.php?user_id=${user.id}&business_id=${id}`);
+    const res = await fetch(
+      `${backendServer}/businesses/delete.php?user_id=${user.id}&business_id=${id}`
+    );
 
     if (!res.ok) {
       const txt = await res.text();
@@ -86,13 +92,13 @@ export default function BusinessesPage({ backendServer }) {
 
     const data = await res.json();
 
-    if(data.success){
+    if (data.success) {
       fetchBusinesses();
       alert(`Business "${name}" has been deleted!`);
-    }else{
+    } else {
       alert(`Error while deleting business "${name}"`);
     }
-  }
+  };
 
   return (
     <div className="container my-5">
@@ -124,8 +130,13 @@ export default function BusinessesPage({ backendServer }) {
               placeholder="Enter the business address."
             />
           </div>
-          <button type="submit" className={`btn btn-${newBusinessLoading ? 'secondary disabled' : 'primary'} w-100`}>
-            {newBusinessLoading ? 'Adding the business...' : 'Add Business'}
+          <button
+            type="submit"
+            className={`btn btn-${
+              newBusinessLoading ? "secondary disabled" : "primary"
+            } w-100`}
+          >
+            {newBusinessLoading ? "Adding the business..." : "Add Business"}
           </button>
         </form>
       </div>
@@ -137,24 +148,50 @@ export default function BusinessesPage({ backendServer }) {
           <div className="col-md-4 mb-4" key={biz.id}>
             <div className="card h-100 shadow-sm">
               <div className="card-body">
-                  <h5 className="card-title">{biz.name}</h5>
+                <h5 className="card-title">{biz.name}</h5>
                 <h6 className="card-subtitle mb-2 text-muted">{biz.address}</h6>
                 <p className="card-text">
                   {biz.description || "No description provided."}
                 </p>
-                {biz.id != Cookies.get("business_id") ?
-                <>
-                  <button className="btn btn-danger mx-2" onClick={() => {deleteBusiness(biz.id, biz.name)}}>Delete</button>
-                  <button className="btn btn-success mx-2" onClick={() => {changeBusiness(biz.id, biz.name)}}>Activate</button>
-                </> : <button className="btn btn-primary disabled">Activated</button>
-                }
+                {biz.id != Cookies.get("business_id") ? (
+                  <>
+                    <button
+                      className="btn btn-danger mx-2"
+                      onClick={() => {
+                        deleteBusiness(biz.id, biz.name);
+                      }}
+                    >
+                      Delete
+                    </button>
+                    <button
+                      className="btn btn-success mx-2"
+                      onClick={() => {
+                        changeBusiness(biz.id, biz.name);
+                      }}
+                    >
+                      Activate
+                    </button>
+                  </>
+                ) : (
+                  <button className="btn btn-primary disabled">
+                    Activated
+                  </button>
+                )}
               </div>
             </div>
           </div>
         ))}
-        {loading ? <p className="text-center">Loading...</p> :
-        businesses.length === 0 && (
-          <p className="text-muted text-center">No businesses added yet.</p>
+        {loading ? (
+          <LoadingSpinner
+            type="ring"
+            size={45}
+            color="#dc3545"
+            message="Loading businesses..."
+          />
+        ) : (
+          businesses.length === 0 && (
+            <p className="text-muted text-center">No businesses added yet.</p>
+          )
         )}
       </div>
     </div>

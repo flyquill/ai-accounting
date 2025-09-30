@@ -1,18 +1,44 @@
-import logo from "./logo.svg";
 import "./App.css";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ChatUI from "./components/ChatUI";
 import Sidebar from "./components/Sidebar";
 import BusinessesPage from "./pages/businesses";
 import Login from "./pages/Login";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import { ClerkProvider } from "@clerk/clerk-react";
+import LoadingSpinner from "./components/LoadingSpinner";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { ClerkProvider, useAuth } from "@clerk/clerk-react";
+
+// Component to conditionally render sidebar
+function AppLayout({ children }) {
+  const { isSignedIn, isLoaded } = useAuth();
+  
+  // Show full-screen loading spinner while Clerk is determining auth status
+  if (!isLoaded) {
+    return (
+      <LoadingSpinner 
+        type="ring"
+        size={50}
+        color="#007bff"
+        message="Initializing application..."
+        overlay={true}
+      />
+    );
+  }
+  
+  return (
+    <div className="d-flex">
+      {isSignedIn && <Sidebar />}
+      <div className="flex-grow-1">
+        {children}
+      </div>
+    </div>
+  );
+}
 
 function App() {
   const n8nServer = process.env.REACT_APP_N8N_WEB_SERVER;
   const backendServer = process.env.REACT_APP_BACKEND_SERVER;
-  // Import your Publishable Key
-  const PUBLISHABLE_KEY = process.env.REACT_APP_VITE_CLERK_PUBLISHABLE_KEY;
+  const PUBLISHABLE_KEY = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY;
 
   if (!PUBLISHABLE_KEY) {
     throw new Error("Add your Clerk Publishable Key to the .env file");
@@ -21,16 +47,12 @@ function App() {
   return (
     <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
       <Router>
-        <div className="d-flex">
-          <Sidebar />
+        <AppLayout>
           <Routes>
-            {/* Public Routes - Accessible to everyone */}
+            <Route path="/" element={<Navigate to="/chat" replace />} />
             <Route path="/login" element={<Login />} />
 
-            {/* 🔐 Protected Routes Group 🔐 */}
-            {/* This route uses the ProtectedRoute component as its element */}
             <Route element={<ProtectedRoute />}>
-              {/* Child routes of the ProtectedRoute will only be rendered if the user is logged in */}
               <Route
                 path="/chat"
                 element={
@@ -43,10 +65,24 @@ function App() {
               />
             </Route>
 
-            {/* Optional: Add a 404 Not Found Route */}
-            <Route path="*" element={<div>404 Not Found</div>} />
+            <Route 
+              path="*" 
+              element={
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '400px',
+                  flexDirection: 'column',
+                  gap: '20px'
+                }}>
+                  <h2>404 - Page Not Found</h2>
+                  <p>The page you're looking for doesn't exist.</p>
+                </div>
+              } 
+            />
           </Routes>
-        </div>
+        </AppLayout>
       </Router>
     </ClerkProvider>
   );

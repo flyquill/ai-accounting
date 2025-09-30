@@ -1,22 +1,36 @@
-import React from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useUser } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/clerk-react";
+import { Navigate, Outlet } from "react-router-dom";
+import LoadingSpinner from "./LoadingSpinner";
 
 const ProtectedRoute = () => {
-  const { isLoaded, isSignedIn } = useUser();
-  const location = useLocation();
-  const LOGIN_PATH = "/logina";
+  const { isSignedIn, isLoaded } = useAuth();
 
-  // While Clerk is initializing, don't redirect — show nothing or a loader
-  if (!isLoaded) return null; // or return <div>Loading...</div>
-
-  // If Clerk is loaded and user not signed in, redirect to login.
-  // We pass state so we can redirect back after login if wanted.
-  if (!isSignedIn) {
-    return <Navigate to={LOGIN_PATH} state={{ from: location }} replace />;
+  // Show loading spinner while checking authentication
+  if (!isLoaded) {
+    return (
+      <div style={{
+        width: '100%',
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <LoadingSpinner 
+          type="clip"
+          size={40}
+          color="#28a745"
+          message="Verifying authentication..."
+        />
+      </div>
+    );
   }
 
-  // User is signed in -> render the protected route children
+  // Redirect to login if not authenticated
+  if (!isSignedIn) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Render child routes if authenticated
   return <Outlet />;
 };
 
