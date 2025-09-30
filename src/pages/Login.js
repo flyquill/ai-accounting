@@ -1,5 +1,6 @@
 import React from 'react'
-import { SignedOut, SignInButton, SignUpButton } from '@clerk/clerk-react'
+import { SignedIn, SignedOut, SignInButton, SignUpButton } from '@clerk/clerk-react'
+import { Outlet } from 'react-router-dom'
 
 const Login = () => {
 
@@ -11,6 +12,9 @@ const Login = () => {
             <SignInButton />
             <SignUpButton />
         </SignedOut>
+        <SignedIn>
+          <Outlet />
+        </SignedIn>
     </div>
   )
 }

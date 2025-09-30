@@ -23,10 +23,6 @@ export default function ChatUI({ n8nServer, backendServer, botName = "Assistant"
   const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
-  
-  if(!user?.id){
-    navigate('/login');
-  }
 
   const businessId = Cookies.get("business_id");
 
