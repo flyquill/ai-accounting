@@ -2,20 +2,30 @@ import "./App.css";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ChatUI from "./components/ChatUI";
 import Sidebar from "./components/Sidebar";
+import SaleInvoiceForm from "./components/SaleInvoiceForm";
 import BusinessesPage from "./pages/businesses";
+import AccountsPage from "./pages/Accounts";
+import NotFoundPage from "./pages/NotFoundPage";
+import Settings from "./pages/settings";
+import Dashbaord from "./pages/Dashboard";
 import Login from "./pages/Login";
 import LoadingSpinner from "./components/LoadingSpinner";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { ClerkProvider, useAuth } from "@clerk/clerk-react";
 
 // Component to conditionally render sidebar
 function AppLayout({ children }) {
   const { isSignedIn, isLoaded } = useAuth();
-  
+
   // Show full-screen loading spinner while Clerk is determining auth status
   if (!isLoaded) {
     return (
-      <LoadingSpinner 
+      <LoadingSpinner
         type="clip"
         size={50}
         color="#007bff"
@@ -24,13 +34,11 @@ function AppLayout({ children }) {
       />
     );
   }
-  
+
   return (
     <div className="d-flex">
       {isSignedIn && <Sidebar />}
-      <div className="flex-grow-1">
-        {children}
-      </div>
+      <div className="flex-grow-1">{children}</div>
     </div>
   );
 }
@@ -49,10 +57,11 @@ function App() {
       <Router>
         <AppLayout>
           <Routes>
-            <Route path="/" element={<Navigate to="/chat" replace />} />
             <Route path="/login" element={<Login />} />
 
             <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<Dashbaord />} />
+              <Route path="/accounts" element={<AccountsPage />} />
               <Route
                 path="/chat"
                 element={
@@ -63,23 +72,13 @@ function App() {
                 path="/businesses"
                 element={<BusinessesPage backendServer={backendServer} />}
               />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/sale-invoice" element={<SaleInvoiceForm />} />
             </Route>
 
-            <Route 
-              path="*" 
-              element={
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  minHeight: '400px',
-                  flexDirection: 'column',
-                  gap: '20px'
-                }}>
-                  <h2>404 - Page Not Found</h2>
-                  <p>The page you're looking for doesn't exist.</p>
-                </div>
-              } 
+            <Route
+              path="*"
+              element={<NotFoundPage />}
             />
           </Routes>
         </AppLayout>

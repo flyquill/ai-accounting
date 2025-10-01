@@ -65,3 +65,48 @@
     display: none;
   }
 }
+
+/* Add these styles to your existing Sidebar.css file */
+
+/* For the smooth rotation of the dropdown arrow */
+.transition-transform {
+  transition: transform 0.3s ease;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+/* Style for the nested submenu links */
+.sub-link {
+  font-size: 0.9rem; /* Make sub-links slightly smaller */
+  padding-left: 1rem; /* Indent them more */
+}
+
+/* Optional: Slightly fade the sub-link text */
+.sub-link {
+  color: #555; /* Adjust color as needed */
+}
+
+.sub-link:hover {
+  color: #000;
+}
+
+/* Add this to your Sidebar.css file */
+
+.sidebar-link.active {
+  background-color: rgba(0, 123, 255, 0.1); /* A light blue background */
+  color: #0d6efd; /* The primary Bootstrap blue color */
+  font-weight: 600; /* Make the font bold */
+  border-right: 3px solid #0d6efd; /* Add a little indicator bar */
+}
+
+/* Ensure the icon color also changes */
+.sidebar-link.active i {
+  color: #0d6efd;
+}
+
+/* Optional: Make sure hover styles don't completely override the active style */
+.sidebar-link.active:hover {
+  background-color: rgba(0, 123, 255, 0.15); /* A slightly darker blue on hover */
+}

@@ -1,0 +1,46 @@
+/* src/pages/NotFoundPage.css */
+
+.not-found-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    font-family: 'Poppins', sans-serif; /* Recommended: Add Google Fonts for a better look */
+  }
+  
+  .card {
+    backdrop-filter: blur(10px);
+    background-color: rgba(255, 255, 255, 0.75);
+  }
+  
+  .svg-text-404 {
+    font-size: 10rem;
+    font-weight: 700;
+    fill: #e9ecef; /* Light grey */
+    stroke: #ced4da; /* Slightly darker stroke */
+    stroke-width: 2;
+  }
+  
+  .svg-magnifying-glass-circle {
+    fill: none;
+    stroke: #0d6efd; /* Bootstrap primary color */
+    stroke-width: 10;
+  }
+  .svg-magnifying-glass-handle {
+    stroke: #0d6efd;
+    stroke-width: 10;
+    stroke-linecap: round;
+  }
+  .svg-magnifying-glass-triangle {
+    fill: #6c757d; /* Bootstrap secondary color */
+  }
+  
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+  }
+  
+  .not-found-svg {
+    animation: float 4s ease-in-out infinite;
+    max-width: 100%;
+    height: auto;
+  }
