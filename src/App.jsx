@@ -16,7 +16,7 @@ function AppLayout({ children }) {
   if (!isLoaded) {
     return (
       <LoadingSpinner 
-        type="ring"
+        type="clip"
         size={50}
         color="#007bff"
         message="Initializing application..."

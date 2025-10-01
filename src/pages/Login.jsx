@@ -1,6 +1,6 @@
 import React from 'react'
 import { SignedIn, SignedOut, SignInButton, SignUpButton } from '@clerk/clerk-react'
-import { Outlet } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 
 const Login = () => {
 
@@ -13,7 +13,7 @@ const Login = () => {
             <SignUpButton />
         </SignedOut>
         <SignedIn>
-          <Outlet />
+          <Navigate to="/dashboard" replace />
         </SignedIn>
     </div>
   )

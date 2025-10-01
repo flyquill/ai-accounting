@@ -183,9 +183,9 @@ export default function BusinessesPage({ backendServer }) {
         ))}
         {loading ? (
           <LoadingSpinner
-            type="ring"
-            size={45}
-            color="#dc3545"
+            type="clip"
+            size={35}
+            color="#007bff"
             message="Loading businesses..."
           />
         ) : (
