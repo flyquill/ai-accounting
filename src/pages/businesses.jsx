@@ -22,7 +22,7 @@ export default function BusinessesPage({ backendServer }) {
 
   const fetchBusinesses = async () => {
     const res = await fetch(
-      `${backendServer}/businesses/get.php?user_id=${user.id}`
+      `${backendServer}/businesses/get/${user.id}`
     );
 
     if (!res.ok) {
@@ -48,13 +48,12 @@ export default function BusinessesPage({ backendServer }) {
 
     setNewBusinessLoading(true);
 
-    const res = await fetch(`${backendServer}/businesses/new.php`, {
+    const res = await fetch(`${backendServer}/businesses/new/${user.id}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: formData.name,
-        address: formData.address,
-        user_clerk_id: user.id,
+        address: formData.address
       }),
     });
 
@@ -82,7 +81,8 @@ export default function BusinessesPage({ backendServer }) {
 
   const deleteBusiness = async (id, name) => {
     const res = await fetch(
-      `${backendServer}/businesses/delete.php?user_id=${user.id}&business_id=${id}`
+      `${backendServer}/businesses/delete/${user.id}/business/${id}`, 
+      { method: 'DELETE' }
     );
 
     if (!res.ok) {

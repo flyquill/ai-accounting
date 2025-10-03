@@ -28,7 +28,7 @@ export default function ChatUI({ n8nServer, backendServer, botName = "Assistant"
 
   const verifyBusiness = async () => {
 
-    const res = await fetch(`${backendServer}/businesses/verify.php?user_id=${user.id}&business_id=${businessId}`);
+    const res = await fetch(`${backendServer}/businesses/verify/${user.id}/business/${businessId}`);
 
     if (!res.ok) {
       const txt = await res.text();
@@ -38,7 +38,7 @@ export default function ChatUI({ n8nServer, backendServer, botName = "Assistant"
     const data = await res.json();
     
     if(!data.success){
-      alert('Please select a valid business from businesses');
+      alert('Please select a valid business');
       navigate('/businesses');
     }
   }
