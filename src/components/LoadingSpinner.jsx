@@ -36,7 +36,7 @@ const LoadingSpinner = ({
       backgroundColor: 'rgba(255, 255, 255, 0.95)',
       zIndex: 9999
     } : {
-      minHeight: '200px',
+      // minHeight: '200px',
       padding: '20px'
     })
   };

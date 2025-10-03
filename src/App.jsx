@@ -60,8 +60,9 @@ function App() {
             <Route path="/login" element={<Login />} />
 
             <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<Dashbaord />} />
               <Route path="/dashboard" element={<Dashbaord />} />
-              <Route path="/accounts" element={<AccountsPage />} />
+              <Route path="/accounts" element={<AccountsPage backendServer={backendServer} />} />
               <Route
                 path="/chat"
                 element={

@@ -1,55 +1,85 @@
 // src/App.jsx
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from "react";
+import { useUser } from "@clerk/clerk-react";
+import Cookies from "js-cookie";
+import LoadingSpinner from "../components/LoadingSpinner";
 
-// Some initial data to start with
-const initialAccounts = [
-  { id: 1, name: 'Main Checking', type: 'Checking', balance: 1543.22 },
-  { id: 2, name: 'Vacation Savings', type: 'Savings', balance: 8510.50 },
-  { id: 3, name: 'Emergency Fund', type: 'Savings', balance: 20000.00 },
-  { id: 4, name: 'Primary Credit Card', type: 'Credit', balance: -789.45 },
-];
+function Accounts({ backendServer }) {
+  const { isLoaded, user } = useUser();
 
-function Accounts() {
   // === STATE MANAGEMENT ===
   // State for the list of all accounts
-  const [accounts, setAccounts] = useState(initialAccounts);
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // State for the form inputs
-  const [accountName, setAccountName] = useState('');
-  const [accountType, setAccountType] = useState('Checking');
-  const [balance, setBalance] = useState('');
+  const [accountName, setAccountName] = useState("");
+  const [accountAddress, setAccountAddress] = useState("");
+  const [accountPhone, setAccountPhone] = useState("");
+  const [accountType, setAccountType] = useState("Checking");
+  const [openingBalance, setOpeningBalance] = useState(0);
 
   // State for the search/filter term
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const businessId = Cookies.get("business_id");
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    fetchAccounts();
+  }, [isLoaded, loading]);
 
   // === HANDLERS ===
   /**
    * Handles the form submission to add a new account.
    */
-  const handleAddAccount = (e) => {
-    e.preventDefault(); // Prevent page reload
+  const handleAddAccount = async (e) => {
 
+    
+    e.preventDefault(); // Prevent page reload
+    
     // Basic validation
-    if (!accountName || !balance) {
-      alert('Please fill in both account name and balance.');
+    if (!accountName) {
+      alert("Please fill in account name.");
       return;
     }
+    
+    setLoading(true);
 
-    const newAccount = {
-      id: Date.now(), // Simple unique ID
-      name: accountName,
-      type: accountType,
-      balance: parseFloat(balance), // Convert string input to a number
-    };
+    const res = await fetch(`${backendServer}/accounts/new/${user.id}/business/${businessId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: accountName,
+        address: accountAddress,
+        phone: accountPhone,
+        type: accountType,
+        openingBalance: parseFloat(openingBalance)
+      }),
+    });
 
-    // Add the new account to the existing list
-    setAccounts([...accounts, newAccount]);
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`Server error: ${res.status} ${txt}`);
+    }
+
+    const data = await res.json();
+
+    if (data.success) {
+      fetchBusinesses();
+    }
+
+    fetchAccounts();
 
     // Clear the form fields
-    setAccountName('');
-    setAccountType('Checking');
-    setBalance('');
+    setAccountName("");
+    setAccountAddress("");
+    setAccountPhone("");
+    setAccountType("CUSTOMER");
+    setOpeningBalance(0);
+
+    setLoading(false);
   };
 
   /**
@@ -57,8 +87,26 @@ function Accounts() {
    */
   const handleDeleteAccount = (idToDelete) => {
     // Filter out the account with the matching ID
-    const updatedAccounts = accounts.filter(account => account.id !== idToDelete);
+    const updatedAccounts = accounts.filter(
+      (account) => account.id !== idToDelete
+    );
     setAccounts(updatedAccounts);
+  };
+
+  const fetchAccounts = async () => {
+
+    const res = await fetch(
+      `${backendServer}/accounts/get/${user.id}/business/${businessId}`
+    );
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`Server error: ${res.status} ${txt}`);
+    }
+
+    const data = await res.json();
+    setAccounts(data);
+    setLoading(false);
   };
 
   // === DERIVED STATE & MEMOIZATION ===
@@ -70,9 +118,12 @@ function Accounts() {
     if (!searchTerm) {
       return accounts; // If no search term, return all accounts
     }
-    return accounts.filter(account =>
-      account.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      account.type.toLowerCase().includes(searchTerm.toLowerCase())
+    return accounts.filter(
+      (account) =>
+        account.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        account.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        account.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        account.type.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [accounts, searchTerm]);
 
@@ -80,16 +131,19 @@ function Accounts() {
    * Calculates the total balance of the *filtered* accounts.
    */
   const totalBalance = useMemo(() => {
-    return filteredAccounts.reduce((total, account) => total + account.balance, 0);
+    return filteredAccounts.reduce(
+      (total, account) => total + account.openingBalance,
+      0
+    );
   }, [filteredAccounts]);
 
   /**
    * Formats a number into a currency string (e.g., $1,234.56).
    */
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "PKR",
     }).format(amount);
   };
 
@@ -107,40 +161,74 @@ function Accounts() {
           <form onSubmit={handleAddAccount}>
             <div className="row g-3">
               <div className="col-md-5">
-                <label htmlFor="accountName" className="form-label">Account Name</label>
+                <label htmlFor="accountName" className="form-label">
+                  Account Name
+                </label>
                 <input
                   type="text"
                   className="form-control"
                   id="accountName"
                   value={accountName}
                   onChange={(e) => setAccountName(e.target.value)}
-                  placeholder="e.g., Vacation Savings"
+                  placeholder="e.g., MUHAMMAD USMAN"
+                  required
+                />
+              </div>
+              <div className="col-md-5">
+                <label htmlFor="accountName" className="form-label">
+                  Account Address
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="accountName"
+                  value={accountAddress}
+                  onChange={(e) => setAccountAddress(e.target.value)}
+                  placeholder="e.g., MULTAN, PAKISTAN"
+                  required
+                />
+              </div>
+              <div className="col-md-5">
+                <label htmlFor="accountName" className="form-label">
+                  Account Phone
+                </label>
+                <input
+                  type="number"
+                  className="form-control"
+                  id="accountName"
+                  value={accountPhone}
+                  onChange={(e) => setAccountPhone(e.target.value)}
+                  placeholder="e.g., 0300-0000000"
                   required
                 />
               </div>
               <div className="col-md-3">
-                <label htmlFor="accountType" className="form-label">Account Type</label>
+                <label htmlFor="accountType" className="form-label">
+                  Account Type
+                </label>
                 <select
                   className="form-select"
                   id="accountType"
                   value={accountType}
                   onChange={(e) => setAccountType(e.target.value)}
                 >
-                  <option>Checking</option>
-                  <option>Savings</option>
-                  <option>Credit</option>
-                  <option>Investment</option>
+                  <option>CUSTOMER</option>
+                  <option>SUPPLIER</option>
+                  <option>EXPENSE</option>
+                  <option>ASSET</option>
                 </select>
               </div>
               <div className="col-md-2">
-                <label htmlFor="balance" className="form-label">Balance</label>
+                <label htmlFor="openingBalance" className="form-label">
+                  Opening Balance
+                </label>
                 <input
                   type="number"
                   step="0.01"
                   className="form-control"
-                  id="balance"
-                  value={balance}
-                  onChange={(e) => setBalance(e.target.value)}
+                  id="openingBalance"
+                  value={openingBalance}
+                  onChange={(e) => setOpeningBalance(e.target.value)}
                   placeholder="0.00"
                   required
                 />
@@ -177,45 +265,74 @@ function Accounts() {
               <thead className="table-light">
                 <tr>
                   <th scope="col">Account Name</th>
+                  <th scope="col">Account Address</th>
+                  <th scope="col">Account Phone</th>
                   <th scope="col">Type</th>
-                  <th scope="col" className="text-end">Balance</th>
-                  <th scope="col" className="text-center">Actions</th>
+                  <th scope="col" className="text-end">
+                    Balance
+                  </th>
+                  <th scope="col" className="text-center">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filteredAccounts.length > 0 ? (
-                  filteredAccounts.map(account => (
+                  filteredAccounts.map((account) => (
                     <tr key={account.id}>
                       <td>{account.name}</td>
+                      <td>{account.address}</td>
+                      <td>{account.phone}</td>
                       <td>
-                        <span className={`badge bg-${account.type === 'Credit' ? 'warning' : 'info'}`}>
+                        <span
+                          className={`badge bg-${
+                            account.type === "Credit" ? "warning" : "info"
+                          }`}
+                        >
                           {account.type}
                         </span>
                       </td>
-                      <td className={`text-end ${account.balance < 0 ? 'text-danger' : ''}`}>
-                        {formatCurrency(account.balance)}
+                      <td
+                        className={`text-end ${
+                          account.openingBalance < 0 ? "text-danger" : ""
+                        }`}
+                      >
+                        {formatCurrency(account.openingBalance)}
                       </td>
                       <td className="text-center">
                         <button
-                          className="btn btn-sm btn-outline-danger"
+                          className="btn btn-sm btn-danger"
                           onClick={() => handleDeleteAccount(account.id)}
                           title="Delete Account"
                         >
-                          <i className="bi bi-trash"></i>
+                          Delete
                         </button>
                       </td>
                     </tr>
                   ))
+                ) : loading ? (
+                  <tr>
+                    <td colSpan="6" className="text-center text-muted py-4">
+                      <LoadingSpinner
+                        type="clip"
+                        size={35}
+                        color="#007bff"
+                        message="Loading accounts..."
+                      />
+                    </td>
+                  </tr>
                 ) : (
                   <tr>
-                    <td colSpan="4" className="text-center text-muted py-4">No accounts found.</td>
+                    <td colSpan="6" className="text-center text-muted py-4">
+                      No accounts found.
+                    </td>
                   </tr>
                 )}
               </tbody>
               {/* Table Footer with Summary */}
               <tfoot>
                 <tr className="table-light fw-bold">
-                  <td colSpan="2">Total Balance</td>
+                  <td colSpan="4">Total Balance</td>
                   <td className="text-end">{formatCurrency(totalBalance)}</td>
                   <td></td>
                 </tr>
@@ -228,4 +345,4 @@ function Accounts() {
   );
 }
 
-export default Accounts
+export default Accounts;

@@ -1,7 +1,7 @@
 const express = require("express");
 const pool = require("../config/db"); // Adjust the path to your db.js file
-const axios = require("axios");
 const router = express.Router();
+const privateFunctions = require('./utils/functions');
 require("dotenv").config({ path: "./.env.local" });
 
 router.get("/get/:userId", async (req, res) => {
@@ -25,11 +25,9 @@ router.get("/verify/:userId/business/:businessId", async (req, res) => {
     const userId = req.params.userId ?? null;
     const businessId = req.params.businessId ?? null;
 
-    const [rows] = await pool.execute(
-      `SELECT count(id) as rows FROM businesses WHERE id = ${businessId} AND user_clerk_id = '${userId}'`
-    );
+    const isVerified = await privateFunctions.verifyBusiness(userId, businessId);
 
-    if(rows[0].rows > 0){
+    if(isVerified){
         res.json({success: true});
     }else{
         res.json({success: false, error: "This business is not verified!"});
@@ -71,12 +69,9 @@ router.delete("/delete/:userId/business/:businessId", async (req, res) => {
     const userId = req.params.userId ?? null;
     const businessId = req.params.businessId ?? null;
 
-    try {
-      const response = await axios.get(
-        `${process.env.APP_URL}/businesses/verify/${userId}/business/${businessId}`
-      );
+    const isVerified = await privateFunctions.verifyBusiness(userId, businessId);
 
-      if(response.data.success){
+      if(isVerified){
           const [result] = await pool.execute(`DELETE FROM businesses WHERE id = ${businessId} AND user_clerk_id = '${userId}'`);
 
           if(result.affectedRows = 1){
@@ -88,10 +83,6 @@ router.delete("/delete/:userId/business/:businessId", async (req, res) => {
         res.json({error: "You are not allowed to delete this business!"});
       }
 
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      res.status(500).json({ error: "Failed to fetch data" });
-    }
   } catch (error) {
     console.error("Error fetching businesses:", error);
     res.status(500).send("Server Error", error);

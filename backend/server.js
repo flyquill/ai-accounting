@@ -13,10 +13,8 @@ app.use(express.urlencoded({ extended: true }));
 
 app.listen(3000);
 
-app.get('/', (req, res) => {
-    res.json({status: false})
-})
-
 const businessesRouter = require('./routes/businesses');
+const accountsRouter = require('./routes/accounts');
 
 app.use('/businesses', businessesRouter)
+app.use('/accounts', accountsRouter)
